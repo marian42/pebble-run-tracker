@@ -1,28 +1,34 @@
+const USE_DEBUG_POSITION = false;
+
 Pebble.addEventListener("ready",
     function(e) {
         console.log("Hello world! - Sent from your javascript application.");
-        let timer = setInterval(sendSyntheticPosition, INTERVAL_SEC * 1000);
+        if (USE_DEBUG_POSITION) {
+            setInterval(sendSyntheticPosition, INTERVAL_SEC * 1000);
+        }
     }
 );
 
 
 function sendPosition(latitude, longitude) {
     Pebble.sendAppMessage({
-      "latitude": Math.round(latitude * 1e6),
-      "longitude": Math.round(longitude * 1e6),
+        "latitude": Math.round(latitude * 1e6),
+        "longitude": Math.round(longitude * 1e6),
     });
 }
 
-var watchId = navigator.geolocation.watchPosition(
-  function(pos) {
-    console.log("got a GPS position! " + pos.coords.latitude + ", " + pos.coords.longitude);
-    sendPosition(pos.coords.latitude, pos.coords.longitude);
-  },
-  function(err) {
-    console.log("GPS error: " + err.message);
-  },
-  { enableHighAccuracy: true, maximumAge: 0, timeout: 5000 }
-);
+if (!USE_DEBUG_POSITION) {
+    var watchId = navigator.geolocation.watchPosition(
+    function(pos) {
+        // console.log("got a GPS position! " + pos.coords.latitude + ", " + pos.coords.longitude);
+        sendPosition(pos.coords.latitude, pos.coords.longitude);
+    },
+    function(err) {
+        console.log("GPS error: " + err.message);
+    },
+    { enableHighAccuracy: true, maximumAge: 0, timeout: 5000 }
+    );
+}
 
 
 // Clear the watch and stop receiving updates

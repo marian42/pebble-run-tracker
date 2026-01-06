@@ -1,4 +1,8 @@
 #include <pebble.h>
+#include <math.h>
+
+#define DEG_TO_RAD (3.14159265359 / 180.0f)
+#define EARTH_RADIUS_M 6371000.0f
 
 enum {
   KEY_LATITUDE = 10000,
@@ -22,6 +26,7 @@ static int16_t statusUpdateTimer = 0;
 typedef struct {
   float latitude;
   float longitude;
+  uint32_t time;
 } Position;
 
 static Position startPosition;
@@ -43,6 +48,36 @@ static uint32_t getCurrentTime(void) {
   return ((int32_t)s * 1000) + ms;
 }
 
+static float fast_sqrtf(float x) {
+  union {
+    float f;
+    uint32_t i;
+  } u = { x };
+  u.i = 0x1FBD1DF5 + (u.i >> 1);
+  return u.f;
+}
+
+static uint32_t getDistance(Position* position1, Position* position2) {
+  float lat1 = position1->latitude * DEG_TO_RAD;
+  float lon1 = position1->longitude * DEG_TO_RAD;
+  float lat2 = position2->latitude * DEG_TO_RAD;
+  float lon2 = position2->longitude * DEG_TO_RAD;
+
+  float dlat = lat2 - lat1;
+  float dlon = lon2 - lon1;
+
+  float sin_dlat = sinf(dlat * 0.5f);
+  float sin_dlon = sinf(dlon * 0.5f);
+
+  float a = sin_dlat * sin_dlat +
+            cosf(lat1) * cosf(lat2) *
+            sin_dlon * sin_dlon;
+
+  float c = 2.0f * atan2f(fast_sqrtf(a), fast_sqrtf(1.0f - a));
+
+  float distance = EARTH_RADIUS_M * c;
+  return (uint32_t)(distance * 1000.0f);
+}
 
 static void inbox_received_handler(DictionaryIterator *iter, void *context) {
   Tuple *latitude_kvp = dict_find(iter, KEY_LATITUDE);
@@ -71,20 +106,33 @@ static void inbox_received_handler(DictionaryIterator *iter, void *context) {
   Position newPosition;
   newPosition.latitude = latitude;
   newPosition.longitude = longitude;
+  newPosition.time = getCurrentTime();
 
   switch (runState) {
     case STATE_WAITING_FOR_GPS:
       runState = STATE_READY;
       break;
-    case STATE_RUNNING:
-      distanceMillimeters += 3141;
+    case STATE_RUNNING:;
+      uint32_t stepDistance = getDistance(&lastPosition, &newPosition);
+      uint32_t displayDistance = distanceMillimeters + stepDistance;
 
-      static char formatted_distance[10];
-      
-      snprintf(formatted_distance, sizeof(formatted_distance), "%lu.%02lu", distanceMillimeters / 1000000, (distanceMillimeters / 10000) % 100);
+      static char formatted_distance[10];      
+      snprintf(formatted_distance, sizeof(formatted_distance), "%lu.%02lu", displayDistance / 1000000, (displayDistance / 10000) % 100);
       text_layer_set_text(s_text_distance, formatted_distance);
 
-      break;
+      if (stepDistance > 20000) {
+        distanceMillimeters += stepDistance;
+        uint32_t timeDifference = newPosition.time - lastPosition.time;
+
+        uint32_t pace = 1000 * timeDifference / stepDistance;
+        static char formatted_pace[10];
+        snprintf(formatted_pace, sizeof(formatted_pace), "%lu:%02lu", pace / 60, pace % 60);
+        text_layer_set_text(s_text_pace, formatted_pace);
+
+        lastPosition = newPosition;
+      }
+      // Don't update last position if we're not updating 
+      return;
   }
 
   lastPosition = newPosition;
@@ -101,19 +149,19 @@ static void prv_select_click_handler(ClickRecognizerRef recognizer, void *contex
       startPosition = lastPosition;
       startTime = getCurrentTime();
       text_layer_set_text(s_text_layer, "Run started!");
-      statusUpdateTimer = 10;
+      statusUpdateTimer = 4;
       return;
     case STATE_RUNNING:
       runState = STATE_PAUSED;
       elapsedTime += getCurrentTime() - startTime;
       text_layer_set_text(s_text_layer, "Run paused");
-      statusUpdateTimer = 10;
+      statusUpdateTimer = 4;
       return;
     case STATE_PAUSED:
       runState = STATE_RUNNING;
       startTime = getCurrentTime();
       text_layer_set_text(s_text_layer, "Run resumed");
-      statusUpdateTimer = 10;
+      statusUpdateTimer = 4;
       return;
   }
 }
