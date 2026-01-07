@@ -57,27 +57,32 @@ static float fast_sqrtf(float x) {
   return u.f;
 }
 
+float euclidean_distance(float x, float y) {
+  if (fabs(x) < 0.01) {
+    return y;
+  }
+  if (fabs(y) < 0.01) {
+    return x;
+  }
+
+  return fast_sqrtf(x * x + y * y);
+
+  float theta = atan2f(y, x);
+  if (theta > 1.5 || theta < -1.5) {
+    return y / sinf(theta);
+  } else {
+    return x / cosf(theta);
+  }
+}
+
 static uint32_t getDistance(Position* position1, Position* position2) {
-  float lat1 = position1->latitude * DEG_TO_RAD;
-  float lon1 = position1->longitude * DEG_TO_RAD;
-  float lat2 = position2->latitude * DEG_TO_RAD;
-  float lon2 = position2->longitude * DEG_TO_RAD;
+  float dlat = (position2->latitude - position1->latitude) * 111000.0f; // meters
+  float dlon = (position2->longitude - position1->longitude) * 111000.0f * cosf(position1->latitude * DEG_TO_RAD);
 
-  float dlat = lat2 - lat1;
-  float dlon = lon2 - lon1;
-
-  float sin_dlat = sinf(dlat * 0.5f);
-  float sin_dlon = sinf(dlon * 0.5f);
-
-  float a = sin_dlat * sin_dlat +
-            cosf(lat1) * cosf(lat2) *
-            sin_dlon * sin_dlon;
-
-  float c = 2.0f * atan2f(fast_sqrtf(a), fast_sqrtf(1.0f - a));
-
-  float distance = EARTH_RADIUS_M * c;
+  float distance = euclidean_distance(dlat, dlon);
   return (uint32_t)(distance * 1000.0f);
 }
+
 
 static void inbox_received_handler(DictionaryIterator *iter, void *context) {
   Tuple *latitude_kvp = dict_find(iter, KEY_LATITUDE);
@@ -167,11 +172,11 @@ static void prv_select_click_handler(ClickRecognizerRef recognizer, void *contex
 }
 
 static void prv_up_click_handler(ClickRecognizerRef recognizer, void *context) {
-  text_layer_set_text(s_text_layer, "Up");
+  
 }
 
 static void prv_down_click_handler(ClickRecognizerRef recognizer, void *context) {
-  text_layer_set_text(s_text_layer, "Down");
+  
 }
 
 static void prv_click_config_provider(void *context) {
@@ -293,11 +298,6 @@ static void prv_deinit(void) {
 
 int main(void) {
   prv_init();
-
-  APP_LOG(APP_LOG_LEVEL_DEBUG, "Done initializing, pushed window: %p", s_window);
-
-
-
   app_event_loop();
   prv_deinit();
 }
