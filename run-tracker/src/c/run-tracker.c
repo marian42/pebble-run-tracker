@@ -29,6 +29,16 @@ typedef struct {
   uint32_t time;
 } Position;
 
+typedef struct {
+  uint32_t deltaTime;
+  uint32_t distance;
+  bool valid;
+} SpeedBufferItem;
+
+#define SPEED_BUFFER_SIZE 64
+static int32_t speedBufferPosition = 0;
+static SpeedBufferItem speedBuffer[SPEED_BUFFER_SIZE];
+
 static Position startPosition;
 static Position lastPosition;
 
@@ -40,6 +50,37 @@ static TextLayer *s_text_pace;
 // static TextLayer *s_text_time_unit;
 static TextLayer *s_text_distance_unit;
 static TextLayer *s_text_pace_unit;
+
+static void initializeSpeedBuffer() {
+  for (uint16_t i = 0; i < SPEED_BUFFER_SIZE; i++) {
+    speedBuffer[i].valid = false;
+  }
+  speedBufferPosition = 0;
+}
+
+static void updateSpeedBuffer(uint32_t deltaTime, uint32_t distance) {
+  speedBuffer[speedBufferPosition].deltaTime = deltaTime;
+  speedBuffer[speedBufferPosition].distance = distance;
+  speedBuffer[speedBufferPosition].valid = true;
+  speedBufferPosition = (speedBufferPosition + 1) % SPEED_BUFFER_SIZE;
+}
+
+static uint32_t getPace() {
+  uint32_t totalTime = 0;
+  uint32_t totalDistance = 0;
+  for (int16_t i = SPEED_BUFFER_SIZE - 1; i >= 0; i--) {
+    uint16_t queryIndex = (i + SPEED_BUFFER_SIZE + speedBufferPosition) % SPEED_BUFFER_SIZE;
+    if (!(speedBuffer[queryIndex].valid)) {
+      break;
+    }
+    totalTime += speedBuffer[queryIndex].deltaTime;
+    totalDistance += speedBuffer[queryIndex].distance;
+    if (totalDistance > 1000000) {
+      break;
+    }
+  }
+  return 1000 * totalTime / totalDistance;
+}
 
 static uint32_t getCurrentTime(void) {
   time_t s;
@@ -128,8 +169,9 @@ static void inbox_received_handler(DictionaryIterator *iter, void *context) {
       if (stepDistance > 20000) {
         distanceMillimeters += stepDistance;
         uint32_t timeDifference = newPosition.time - lastPosition.time;
+        updateSpeedBuffer(timeDifference, stepDistance);
 
-        uint32_t pace = 1000 * timeDifference / stepDistance;
+        uint32_t pace = getPace();
         static char formatted_pace[10];
         snprintf(formatted_pace, sizeof(formatted_pace), "%lu:%02lu", pace / 60, pace % 60);
         text_layer_set_text(s_text_pace, formatted_pace);
@@ -155,6 +197,7 @@ static void prv_select_click_handler(ClickRecognizerRef recognizer, void *contex
       startTime = getCurrentTime();
       text_layer_set_text(s_text_layer, "Run started!");
       statusUpdateTimer = 4;
+      initializeSpeedBuffer();
       return;
     case STATE_RUNNING:
       runState = STATE_PAUSED;
@@ -242,6 +285,7 @@ static void prv_window_load(Window *window) {
   s_text_pace = text_layer_create(GRect(0, base_height + row_height * 2, width, row_height));
   text_layer_set_text(s_text_pace, "0:00");
   format_text_layer(s_text_pace);
+  text_layer_set_font(s_text_pace, fonts_get_system_font(FONT_KEY_BITHAM_42_LIGHT));
   layer_add_child(window_layer, text_layer_get_layer(s_text_pace));
 
   s_text_pace_unit = text_layer_create(GRect(width + gap, base_height + row_height * 2 + 6, bounds.size.w - width - gap, 20));
