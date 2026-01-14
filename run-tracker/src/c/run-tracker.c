@@ -44,7 +44,7 @@ static Position startPosition;
 static Position lastPosition;
 
 static Window *s_window;
-static TextLayer *s_text_layer;
+static TextLayer *s_text_status;
 static TextLayer *s_text_time;
 static TextLayer *s_text_distance;
 static TextLayer *s_text_pace;
@@ -202,20 +202,20 @@ static void prv_select_click_handler(ClickRecognizerRef recognizer, void *contex
       elapsedTime = 0;
       startPosition = lastPosition;
       startTime = getCurrentTime();
-      text_layer_set_text(s_text_layer, "Run started!");
+      text_layer_set_text(s_text_status, "Run started!");
       statusUpdateTimer = 4;
       initializeSpeedBuffer();
       return;
     case STATE_RUNNING:
       runState = STATE_PAUSED;
       elapsedTime += getCurrentTime() - startTime;
-      text_layer_set_text(s_text_layer, "Run paused");
+      text_layer_set_text(s_text_status, "Run paused");
       statusUpdateTimer = 4;
       return;
     case STATE_PAUSED:
       runState = STATE_RUNNING;
       startTime = getCurrentTime();
-      text_layer_set_text(s_text_layer, "Run resumed");
+      text_layer_set_text(s_text_status, "Run resumed");
       statusUpdateTimer = 4;
       return;
   }
@@ -260,12 +260,12 @@ static void prv_window_load(Window *window) {
   Layer *window_layer = window_get_root_layer(window);
   GRect bounds = layer_get_bounds(window_layer);
 
-  s_text_layer = text_layer_create(GRect(0, 0, bounds.size.w, 20));
-  text_layer_set_text(s_text_layer, "00:00:00");
-  format_text_layer(s_text_layer);
-  text_layer_set_font(s_text_layer, fonts_get_system_font(FONT_KEY_GOTHIC_18_BOLD));
-  text_layer_set_text_alignment(s_text_layer, GTextAlignmentCenter);
-  layer_add_child(window_layer, text_layer_get_layer(s_text_layer));
+  s_text_status = text_layer_create(GRect(0, 0, bounds.size.w, 20));
+  text_layer_set_text(s_text_status, "Waiting for GPS");
+  format_text_layer(s_text_status);
+  text_layer_set_font(s_text_status, fonts_get_system_font(FONT_KEY_GOTHIC_18_BOLD));
+  text_layer_set_text_alignment(s_text_status, GTextAlignmentCenter);
+  layer_add_child(window_layer, text_layer_get_layer(s_text_status));
 
   int32_t width = 106;
   int32_t row_height = 44;
@@ -302,7 +302,7 @@ static void prv_window_load(Window *window) {
 }
 
 static void prv_window_unload(Window *window) {
-  text_layer_destroy(s_text_layer);
+  text_layer_destroy(s_text_status);
 }
 
 static void time_update_handler(struct tm *tick_time, TimeUnits units_changed)
@@ -311,11 +311,11 @@ static void time_update_handler(struct tm *tick_time, TimeUnits units_changed)
       statusUpdateTimer -= 1;
     } else{
       if (runState == STATE_WAITING_FOR_GPS) {
-        text_layer_set_text(s_text_layer, "Waiting for GPS");
+        text_layer_set_text(s_text_status, "Waiting for GPS");
       } else {
         static char formatted_wall_time[10];
         snprintf(formatted_wall_time, sizeof(formatted_wall_time), "%d:%02d:%02d", tick_time->tm_hour, tick_time->tm_min, tick_time->tm_sec);
-        text_layer_set_text(s_text_layer, formatted_wall_time);
+        text_layer_set_text(s_text_status, formatted_wall_time);
       }
     }
     
