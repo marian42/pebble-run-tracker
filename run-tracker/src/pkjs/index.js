@@ -10,8 +10,7 @@ Pebble.addEventListener("ready",
     } else {
       locationWatchId = navigator.geolocation.watchPosition(
         function (pos) {
-          // console.log("got a GPS position! " + pos.coords.latitude + ", " + pos.coords.longitude);
-          sendPosition(pos.coords.latitude, pos.coords.longitude);
+          sendPosition(pos.coords.latitude, pos.coords.longitude, pos.coords.accuracy);
         },
         function (err) {
           console.log("GPS error: " + err.message);
@@ -23,10 +22,11 @@ Pebble.addEventListener("ready",
 );
 
 
-function sendPosition(latitude, longitude) {
+function sendPosition(latitude, longitude, accuracy) {
   Pebble.sendAppMessage({
     "latitude": Math.round(latitude * 1e6),
     "longitude": Math.round(longitude * 1e6),
+    "accuracy": Math.round(accuracy * 10),
   });
 }
 
@@ -100,5 +100,5 @@ function getSyntheticPosition() {
 // Send to Pebble
 function sendSyntheticPosition() {
   var pos = getSyntheticPosition();
-  sendPosition(pos.lat, pos.lon);
+  sendPosition(pos.lat, pos.lon, 0);
 }

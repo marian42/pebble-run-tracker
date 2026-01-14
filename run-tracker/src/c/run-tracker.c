@@ -7,6 +7,7 @@
 enum {
   KEY_LATITUDE = 10000,
   KEY_LONGITUDE = 10001,
+  KEY_ACCURACY = 10002,
 };
 
 
@@ -128,6 +129,7 @@ static uint32_t getDistance(Position* position1, Position* position2) {
 static void inbox_received_handler(DictionaryIterator *iter, void *context) {
   Tuple *latitude_kvp = dict_find(iter, KEY_LATITUDE);
   Tuple *longitude_kvp = dict_find(iter, KEY_LONGITUDE);
+  Tuple *accuracy_kvp = dict_find(iter, KEY_ACCURACY);
 
   Tuple *t = dict_read_first(iter);
   while (t) {
@@ -139,12 +141,13 @@ static void inbox_received_handler(DictionaryIterator *iter, void *context) {
     t = dict_read_next(iter);
   }
 
-  if (!latitude_kvp || !longitude_kvp) {
+  if (!latitude_kvp || !longitude_kvp || !accuracy_kvp) {
     return;
   }
 
   int32_t intLatitude = latitude_kvp->value->int32;
   int32_t intLongitude = longitude_kvp->value->int32;
+  int32_t intAccuracy = accuracy_kvp->value->int32;
 
   float latitude = intLatitude * 1e-6f;
   float longitude = intLongitude * 1e-6f;
@@ -153,6 +156,10 @@ static void inbox_received_handler(DictionaryIterator *iter, void *context) {
   newPosition.latitude = latitude;
   newPosition.longitude = longitude;
   newPosition.time = getCurrentTime();
+  
+  if (intAccuracy > 200) { // 20m
+    return;
+  }
 
   switch (runState) {
     case STATE_WAITING_FOR_GPS:
@@ -162,7 +169,7 @@ static void inbox_received_handler(DictionaryIterator *iter, void *context) {
       uint32_t stepDistance = getDistance(&lastPosition, &newPosition);
       uint32_t displayDistance = distanceMillimeters + stepDistance;
 
-      static char formatted_distance[10];      
+      static char formatted_distance[10];
       snprintf(formatted_distance, sizeof(formatted_distance), "%lu.%02lu", displayDistance / 1000000, (displayDistance / 10000) % 100);
       text_layer_set_text(s_text_distance, formatted_distance);
 

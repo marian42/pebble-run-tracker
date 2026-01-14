@@ -23,7 +23,8 @@
     },
     "messageKeys": [
       "latitude",
-      "longitude"
+      "longitude",
+      "accuracy"
     ],
     "resources": {
       "media": []
