@@ -10,7 +10,6 @@ enum {
   KEY_ACCURACY = 10002,
 };
 
-
 enum {
   STATE_WAITING_FOR_GPS = 0,
   STATE_READY = 1,
@@ -66,7 +65,7 @@ static void updateSpeedBuffer(uint32_t deltaTime, uint32_t distance) {
   speedBufferPosition = (speedBufferPosition + 1) % SPEED_BUFFER_SIZE;
 }
 
-static uint32_t getPace() {
+static uint32_t getCurrentPace() {
   uint32_t totalTime = 0;
   uint32_t totalDistance = 0;
   const uint32_t paceAveragingDistance = 200 * 1000; // 200m
@@ -81,7 +80,28 @@ static uint32_t getPace() {
       break;
     }
   }
+
+  if (totalDistance == 0) {
+    return 0;
+  }
+
   return 1000 * totalTime / totalDistance;
+}
+
+static uint32_t getOverallPace() {
+  if (distanceMillimeters == 0) {
+    return 0;
+  }
+
+  return 1000 * lastPosition.time / distanceMillimeters;
+}
+
+static void updatePaceDisplay(bool useCurrentPace) {
+  uint32_t pace = useCurrentPace ? getCurrentPace() : getOverallPace();
+  
+  static char formatted_pace[10];
+  snprintf(formatted_pace, sizeof(formatted_pace), "%lu:%02lu", pace / 60, pace % 60);
+  text_layer_set_text(s_text_pace, formatted_pace);
 }
 
 static uint32_t getCurrentTime(void) {
@@ -139,7 +159,7 @@ static void inbox_received_handler(DictionaryIterator *iter, void *context) {
     case STATE_WAITING_FOR_GPS:
       runState = STATE_READY;
       break;
-    case STATE_RUNNING:;
+    case STATE_RUNNING:
       uint32_t stepDistance = getDistance(&lastPosition, &newPosition);
       uint32_t displayDistance = distanceMillimeters + stepDistance;
 
@@ -151,15 +171,12 @@ static void inbox_received_handler(DictionaryIterator *iter, void *context) {
         distanceMillimeters += stepDistance;
         uint32_t timeDifference = newPosition.time - lastPosition.time;
         updateSpeedBuffer(timeDifference, stepDistance);
-
-        uint32_t pace = getPace();
-        static char formatted_pace[10];
-        snprintf(formatted_pace, sizeof(formatted_pace), "%lu:%02lu", pace / 60, pace % 60);
-        text_layer_set_text(s_text_pace, formatted_pace);
+        
+        updatePaceDisplay(true);
 
         lastPosition = newPosition;
       }
-      // Don't update last position if we're not updating 
+      // Don't update last position if we're not updating
       return;
   }
 
@@ -185,12 +202,14 @@ static void prv_select_click_handler(ClickRecognizerRef recognizer, void *contex
       elapsedTime += getCurrentTime() - startTime;
       text_layer_set_text(s_text_status, "Run paused");
       statusUpdateTimer = 4;
+      updatePaceDisplay(false);
       return;
     case STATE_PAUSED:
       runState = STATE_RUNNING;
       startTime = getCurrentTime();
       text_layer_set_text(s_text_status, "Run resumed");
       statusUpdateTimer = 4;
+      updatePaceDisplay(true);
       return;
   }
 }
