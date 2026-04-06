@@ -115,16 +115,6 @@ static void inbox_received_handler(DictionaryIterator *iter, void *context) {
   Tuple *longitude_kvp = dict_find(iter, KEY_LONGITUDE);
   Tuple *accuracy_kvp = dict_find(iter, KEY_ACCURACY);
 
-  Tuple *t = dict_read_first(iter);
-  while (t) {
-    APP_LOG(APP_LOG_LEVEL_INFO,
-            "Key %lu, type %d, length %u",
-            (unsigned long)t->key,
-            t->type,
-            t->length);
-    t = dict_read_next(iter);
-  }
-
   if (!latitude_kvp || !longitude_kvp || !accuracy_kvp) {
     return;
   }
