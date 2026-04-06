@@ -90,41 +90,24 @@ static uint32_t getCurrentTime(void) {
   return ((int32_t)s * 1000) + ms;
 }
 
-static float fast_sqrtf(float x) {
-  union {
-    float f;
-    uint32_t i;
-  } u = { x };
-  u.i = 0x1FBD1DF5 + (u.i >> 1);
-  return u.f;
-}
+static uint32_t getDistance(Position *position1, Position *position2)
+{
+  float lat1 = position1->latitude * DEG_TO_RAD;
+  float lon1 = position1->longitude * DEG_TO_RAD;
+  float lat2 = position2->latitude * DEG_TO_RAD;
+  float lon2 = position2->longitude * DEG_TO_RAD;
 
-float euclidean_distance(float x, float y) {
-  if (fabs(x) < 0.01) {
-    return y;
-  }
-  if (fabs(y) < 0.01) {
-    return x;
-  }
+  float dlat = lat2 - lat1;
+  float dlon = lon2 - lon1;
 
-  return fast_sqrtf(x * x + y * y);
+  float sin_dlat = sinf(dlat * 0.5f);
+  float sin_dlon = sinf(dlon * 0.5f);
 
-  float theta = atan2f(y, x);
-  if (theta > 1.5 || theta < -1.5) {
-    return y / sinf(theta);
-  } else {
-    return x / cosf(theta);
-  }
-}
-
-static uint32_t getDistance(Position* position1, Position* position2) {
-  float dlat = (position2->latitude - position1->latitude) * 111000.0f; // meters
-  float dlon = (position2->longitude - position1->longitude) * 111000.0f * cosf(position1->latitude * DEG_TO_RAD);
-
-  float distance = euclidean_distance(dlat, dlon);
+  float a = sin_dlat * sin_dlat + cosf(lat1) * cosf(lat2) * sin_dlon * sin_dlon;
+  float c = 2.0f * atan2f(sqrtf(a), sqrtf(1.0f - a));
+  float distance = EARTH_RADIUS_M * c;
   return (uint32_t)(distance * 1000.0f);
 }
-
 
 static void inbox_received_handler(DictionaryIterator *iter, void *context) {
   Tuple *latitude_kvp = dict_find(iter, KEY_LATITUDE);
