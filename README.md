@@ -5,9 +5,9 @@ It doesn't require a companion app.
 
 ## Features
 
-The app show the time, distance and pace of your run as well as the wall clock.
+The app shows the time, distance and pace of your run as well as the wall time.
 Press Select to start/pause/resume your run.
-The app doesn't save stats about your previous runs.
+The app doesn't save any data about your previous runs.
 
 ## GPS Accuracy
 
