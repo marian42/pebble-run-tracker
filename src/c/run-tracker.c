@@ -69,6 +69,7 @@ static void updateSpeedBuffer(uint32_t deltaTime, uint32_t distance) {
 static uint32_t getPace() {
   uint32_t totalTime = 0;
   uint32_t totalDistance = 0;
+  const uint32_t paceAveragingDistance = 200 * 1000; // 200m
   for (int16_t i = SPEED_BUFFER_SIZE - 1; i >= 0; i--) {
     uint16_t queryIndex = (i + SPEED_BUFFER_SIZE + speedBufferPosition) % SPEED_BUFFER_SIZE;
     if (!(speedBuffer[queryIndex].valid)) {
@@ -76,7 +77,7 @@ static uint32_t getPace() {
     }
     totalTime += speedBuffer[queryIndex].deltaTime;
     totalDistance += speedBuffer[queryIndex].distance;
-    if (totalDistance > 1000000) {
+    if (totalDistance > paceAveragingDistance) {
       break;
     }
   }
