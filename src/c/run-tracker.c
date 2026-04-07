@@ -146,13 +146,6 @@ float euclidean_distance(float x, float y) {
   }
 
   return fast_sqrtf(x * x + y * y);
-
-  float theta = atan2f(y, x);
-  if (theta > 1.5 || theta < -1.5) {
-    return y / sinf(theta);
-  } else {
-    return x / cosf(theta);
-  }
 }
 
 static uint32_t getDistance(Position* position1, Position* position2) {
