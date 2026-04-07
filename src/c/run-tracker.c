@@ -3,6 +3,7 @@
 
 #define DEG_TO_RAD (3.14159265359 / 180.0f)
 #define EARTH_RADIUS_M 6371000.0f
+#define USE_SQRT 0
 
 enum {
   KEY_LATITUDE = 10000,
@@ -104,6 +105,8 @@ static uint32_t getCurrentTime(void) {
   return ((int32_t)s * 1000) + ms;
 }
 
+#if USE_SQRT
+
 static uint32_t getDistance(Position *position1, Position *position2)
 {
   float lat1 = position1->latitude * DEG_TO_RAD;
@@ -122,6 +125,45 @@ static uint32_t getDistance(Position *position1, Position *position2)
   float distance = EARTH_RADIUS_M * c;
   return (uint32_t)(distance * 1000.0f);
 }
+
+#else // not using sqrt
+
+static float fast_sqrtf(float x) {
+  union {
+    float f;
+    uint32_t i;
+  } u = { x };
+  u.i = 0x1FBD1DF5 + (u.i >> 1);
+  return u.f;
+}
+
+float euclidean_distance(float x, float y) {
+  if (fabs(x) < 0.01) {
+    return y;
+  }
+  if (fabs(y) < 0.01) {
+    return x;
+  }
+
+  return fast_sqrtf(x * x + y * y);
+
+  float theta = atan2f(y, x);
+  if (theta > 1.5 || theta < -1.5) {
+    return y / sinf(theta);
+  } else {
+    return x / cosf(theta);
+  }
+}
+
+static uint32_t getDistance(Position* position1, Position* position2) {
+  float dlat = (position2->latitude - position1->latitude) * 111000.0f; // meters
+  float dlon = (position2->longitude - position1->longitude) * 111000.0f * cosf(position1->latitude * DEG_TO_RAD);
+
+  float distance = euclidean_distance(dlat, dlon);
+  return (uint32_t)(distance * 1000.0f);
+}
+
+#endif
 
 static void inbox_received_handler(DictionaryIterator *iter, void *context) {
   Tuple *latitude_kvp = dict_find(iter, KEY_LATITUDE);
