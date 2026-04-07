@@ -22,6 +22,7 @@ static uint32_t startTime;
 static uint32_t elapsedTime = 0;
 static uint32_t distanceMillimeters = 0;
 static int16_t statusUpdateTimer = 0;
+static uint32_t overallPace = 0;
 
 typedef struct {
   float latitude;
@@ -88,16 +89,8 @@ static uint32_t getCurrentPace() {
   return 1000 * totalTime / totalDistance;
 }
 
-static uint32_t getOverallPace() {
-  if (distanceMillimeters == 0) {
-    return 0;
-  }
-
-  return 1000 * lastPosition.time / distanceMillimeters;
-}
-
 static void updatePaceDisplay(bool useCurrentPace) {
-  uint32_t pace = useCurrentPace ? getCurrentPace() : getOverallPace();
+  uint32_t pace = useCurrentPace ? getCurrentPace() : overallPace;
   
   static char formatted_pace[10];
   snprintf(formatted_pace, sizeof(formatted_pace), "%lu:%02lu", pace / 60, pace % 60);
@@ -173,6 +166,9 @@ static void inbox_received_handler(DictionaryIterator *iter, void *context) {
         updateSpeedBuffer(timeDifference, stepDistance);
         
         updatePaceDisplay(true);
+
+        int32_t totalElapsedTime = elapsedTime + (newPosition.time - startTime);
+        overallPace = 1000 * totalElapsedTime / distanceMillimeters;
 
         lastPosition = newPosition;
       }
