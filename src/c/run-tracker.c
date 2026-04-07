@@ -186,6 +186,10 @@ static void inbox_received_handler(DictionaryIterator *iter, void *context) {
   switch (runState) {
     case STATE_WAITING_FOR_GPS:
       runState = STATE_READY;
+      lastPosition = newPosition;
+      break;
+    case STATE_READY:
+      lastPosition = newPosition;
       break;
     case STATE_RUNNING:
       uint32_t stepDistance = getDistance(&lastPosition, &newPosition);
@@ -207,11 +211,11 @@ static void inbox_received_handler(DictionaryIterator *iter, void *context) {
 
         lastPosition = newPosition;
       }
-      // Don't update last position if we're not updating
-      return;
+      break;
+    case STATE_PAUSED:
+      lastPosition = newPosition;
+      break;
   }
-
-  lastPosition = newPosition;
 }
 
 static void prv_select_click_handler(ClickRecognizerRef recognizer, void *context) {
