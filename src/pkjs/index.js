@@ -29,75 +29,32 @@ function sendPosition(latitude, longitude, accuracy) {
   });
 }
 
-// Clear the watch and stop receiving updates
-// navigator.geolocation.clearWatch(watchId);
+// Simulate movement for debugging
 
-// ---- Pebble GPS simulator ----
-
-// Pebble message keys (must match C enum)
-var KEY_LAT = 0;
-var KEY_LON = 1;
-
-// Center point (degrees)
 var CENTER_LAT = 51.4790275;
 var CENTER_LON = -0.1568381;
-
-// Earth radius (meters)
 var EARTH_RADIUS = 6371000;
-
-// Circle parameters
-var CIRCUMFERENCE = 1000; // meters
-var RADIUS = CIRCUMFERENCE / (2 * Math.PI); // ≈159.155 m
-
-// Speed
-var SPEED_MPS = 8000 / 3600; // 8 km/h → m/s
+var CIRCUMFERENCE = 1000; // Move around a 1000m circle
+var RADIUS = CIRCUMFERENCE / (2 * Math.PI);
+var SPEED_MPS = 8000 / 3600; // 8 km/h in m/s
 var INTERVAL_SEC = 2;
 var STEP_DISTANCE = SPEED_MPS * INTERVAL_SEC;
-
-// Angular velocity (radians per step)
 var ANGLE_STEP = STEP_DISTANCE / RADIUS;
-
-// Noise (meters)
 var NOISE_METERS = 3;
 
-// State
-var angle = 0;
-var timer = null;
+var currentAngle = 0;
 
-// Convert meters to latitude degrees
-function metersToLat(m) {
-  return m / 111320;
-}
-
-// Convert meters to longitude degrees (depends on latitude)
-function metersToLon(m, latDeg) {
-  return m / (111320 * Math.cos(latDeg * Math.PI / 180));
-}
-
-// Generate next position
-function getSyntheticPosition() {
-  angle += ANGLE_STEP;
-  if (angle > 2 * Math.PI) {
-    angle -= 2 * Math.PI;
+function sendSyntheticPosition() {
+  currentAngle += ANGLE_STEP;
+  if (currentAngle > 2 * Math.PI) {
+    currentAngle -= 2 * Math.PI;
   }
 
-  // Ideal circle position (meters)
-  var x = RADIUS * Math.cos(angle);
-  var y = RADIUS * Math.sin(angle);
+  let x = RADIUS * Math.cos(currentAngle) + (Math.random() * 2 - 1) * NOISE_METERS;
+  let y = RADIUS * Math.sin(currentAngle) + (Math.random() * 2 - 1) * NOISE_METERS;
 
-  // Add random noise
-  x += (Math.random() * 2 - 1) * NOISE_METERS;
-  y += (Math.random() * 2 - 1) * NOISE_METERS;
-
-  // Convert to degrees
-  var lat = CENTER_LAT + metersToLat(y);
-  var lon = CENTER_LON + metersToLon(x, CENTER_LAT);
-
-  return { lat, lon };
-}
-
-// Send to Pebble
-function sendSyntheticPosition() {
-  var pos = getSyntheticPosition();
-  sendPosition(pos.lat, pos.lon, 0);
+  let lat = CENTER_LAT + y / 111320;
+  let lon = CENTER_LON + x / (111320 * Math.cos(lat * Math.PI / 180));
+  
+  sendPosition(lat, lon, 0);
 }
