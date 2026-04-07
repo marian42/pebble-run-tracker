@@ -4,7 +4,6 @@ var locationWatchId = null;
 
 Pebble.addEventListener("ready",
   function (e) {
-    console.log("Hello world! - Sent from your javascript application.");
     if (USE_DEBUG_POSITION) {
       setInterval(sendSyntheticPosition, INTERVAL_SEC * 1000);
     } else {
