@@ -8,6 +8,7 @@ It doesn't require a companion app.
 The app shows the time, distance and pace of your run as well as the wall time.
 Press Select to start/pause/resume your run.
 The app doesn't save any data about your previous runs.
+At the moment, the distance can be shown in kilometers but not in miles.
 
 ## GPS Accuracy
 
