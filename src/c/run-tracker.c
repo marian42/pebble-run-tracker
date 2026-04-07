@@ -49,7 +49,6 @@ static TextLayer *s_text_status;
 static TextLayer *s_text_time;
 static TextLayer *s_text_distance;
 static TextLayer *s_text_pace;
-// static TextLayer *s_text_time_unit;
 static TextLayer *s_text_distance_unit;
 static TextLayer *s_text_pace_unit;
 
@@ -303,7 +302,6 @@ static void prv_window_load(Window *window) {
   text_layer_set_text(s_text_time, "00:00");
   format_text_layer(s_text_time);
   text_layer_set_text_alignment(s_text_time, GTextAlignmentCenter);
-  // text_layer_set_font(s_text_time, fonts_get_system_font(FONT_KEY_BITHAM_42_LIGHT));
   layer_add_child(window_layer, text_layer_get_layer(s_text_time));  
   
   s_text_distance = text_layer_create(GRect(0, base_height + row_height * 1, width, row_height));
