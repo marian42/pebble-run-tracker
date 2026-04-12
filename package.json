@@ -21,6 +21,9 @@
     "watchapp": {
       "watchface": false
     },
+    "capabilities": [
+      "location"
+    ],
     "messageKeys": [
       "latitude",
       "longitude",
