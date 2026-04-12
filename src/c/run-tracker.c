@@ -287,17 +287,17 @@ static void prv_window_load(Window *window) {
   Layer *window_layer = window_get_root_layer(window);
   GRect bounds = layer_get_bounds(window_layer);
 
-  s_text_status = text_layer_create(GRect(0, 0, bounds.size.w, 20));
+  s_text_status = text_layer_create(GRect(0, PBL_IF_ROUND_ELSE(10, 0), bounds.size.w, 20));
   text_layer_set_text(s_text_status, "Waiting for GPS");
   format_text_layer(s_text_status);
   text_layer_set_font(s_text_status, fonts_get_system_font(FONT_KEY_GOTHIC_18_BOLD));
   text_layer_set_text_alignment(s_text_status, GTextAlignmentCenter);
   layer_add_child(window_layer, text_layer_get_layer(s_text_status));
 
-  int32_t width = 106;
-  int32_t row_height = 44;
-  int32_t base_height = 24;
+  int32_t width = bounds.size.w * 11 / PBL_IF_ROUND_ELSE(16, 15);
+  int32_t base_height = PBL_IF_ROUND_ELSE(24, 22);
   int32_t gap = 6;
+  int32_t row_height = (bounds.size.h - base_height - PBL_IF_ROUND_ELSE(14, 0)) / 3;
   s_text_time = text_layer_create(GRect(8, base_height + row_height * 0, bounds.size.w - 16, row_height));
   text_layer_set_text(s_text_time, "00:00");
   format_text_layer(s_text_time);
