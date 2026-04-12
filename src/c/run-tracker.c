@@ -364,8 +364,7 @@ static void prv_init(void) {
   });
   app_message_register_inbox_received(inbox_received_handler);
   app_message_open(128, 128); // inbox, outbox sizes
-  const bool animated = true;
-  window_stack_push(s_window, animated);
+  window_stack_push(s_window, /* animated = */ true);
   tick_timer_service_subscribe(SECOND_UNIT, time_update_handler);
 }
 
