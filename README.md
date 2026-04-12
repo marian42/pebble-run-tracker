@@ -1,7 +1,16 @@
 # Pebble Run Tracker
 
 This is a run / walk tracker for Pebble with a focus on simplicity.
-It doesn't require a companion app.
+It doesn't require a companion app but it does require a connection to a phone for GPS.
+
+Supports all Pebble watches, including the 2026 models.
+
+## Screenshots
+Pebble Time, Pebble Time Steel, Pebble 2, Pebble 2 Duo:  
+![](screenshots/screenshot_148x168.png) 
+
+Pebble Round 2:  
+![](screenshots/screenshot_260x260.png)
 
 ## Features
 
