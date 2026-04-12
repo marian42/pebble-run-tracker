@@ -264,23 +264,22 @@ static void prv_click_config_provider(void *context) {
 
 static void format_text_layer(TextLayer* layer) {
   text_layer_set_text_alignment(layer, GTextAlignmentRight);
-  text_layer_set_font(layer, fonts_get_system_font(FONT_KEY_BITHAM_42_BOLD));
   text_layer_set_text_color(layer, GColorWhite);
-  text_layer_set_background_color(layer, GColorBlack);
+  text_layer_set_background_color(layer, GColorClear);
 }
 
 static void format_text_layer_unit(TextLayer* layer) {
   text_layer_set_text_alignment(layer, GTextAlignmentLeft);
   text_layer_set_font(layer, fonts_get_system_font(FONT_KEY_GOTHIC_24_BOLD));
   text_layer_set_text_color(layer, GColorWhite);
-  text_layer_set_background_color(layer, GColorBlack);
+  text_layer_set_background_color(layer, GColorClear);
 }
 
 static void format_text_layer_hint(TextLayer* layer) {
   text_layer_set_text_alignment(layer, GTextAlignmentLeft);
   text_layer_set_font(layer, fonts_get_system_font(FONT_KEY_GOTHIC_18));
   text_layer_set_text_color(layer, GColorWhite);
-  text_layer_set_background_color(layer, GColorBlack);
+  text_layer_set_background_color(layer, GColorClear);
 }
 
 static void prv_window_load(Window *window) {
@@ -295,12 +294,26 @@ static void prv_window_load(Window *window) {
   layer_add_child(window_layer, text_layer_get_layer(s_text_status));
 
   int32_t width = bounds.size.w * 11 / PBL_IF_ROUND_ELSE(16, 15);
-  int32_t base_height = PBL_IF_ROUND_ELSE(24, 22);
+  int32_t base_height = PBL_IF_ROUND_ELSE(28, 22);
   int32_t gap = 6;
-  int32_t row_height = (bounds.size.h - base_height - PBL_IF_ROUND_ELSE(14, 0)) / 3;
+  int32_t row_height = (bounds.size.h - base_height - PBL_IF_ROUND_ELSE(16, 0)) / 3;
   s_text_time = text_layer_create(GRect(8, base_height + row_height * 0, bounds.size.w - 16, row_height));
   text_layer_set_text(s_text_time, "00:00");
   format_text_layer(s_text_time);
+  
+  text_layer_set_font(s_text_time, fonts_get_system_font(
+    PBL_PLATFORM_SWITCH(
+      PBL_PLATFORM_TYPE_CURRENT,
+      /* default */ FONT_KEY_BITHAM_42_BOLD,
+      /* basalt  */ FONT_KEY_BITHAM_42_BOLD,
+      /* chalk   */ FONT_KEY_BITHAM_42_BOLD,
+      /* ?       */ FONT_KEY_BITHAM_42_BOLD,
+      /* emery   */ FONT_KEY_ROBOTO_BOLD_SUBSET_49,
+      /* ?       */ FONT_KEY_BITHAM_42_BOLD,
+      /* gabbro  */ FONT_KEY_ROBOTO_BOLD_SUBSET_49
+    )
+  ));
+  
   text_layer_set_text_alignment(s_text_time, GTextAlignmentCenter);
   layer_add_child(window_layer, text_layer_get_layer(s_text_time));  
   
@@ -318,7 +331,19 @@ static void prv_window_load(Window *window) {
   s_text_pace = text_layer_create(GRect(0, base_height + row_height * 2, width, row_height));
   text_layer_set_text(s_text_pace, "0:00");
   format_text_layer(s_text_pace);
-  text_layer_set_font(s_text_pace, fonts_get_system_font(FONT_KEY_BITHAM_42_LIGHT));
+  
+  text_layer_set_font(s_text_pace, fonts_get_system_font(
+    PBL_PLATFORM_SWITCH(
+      PBL_PLATFORM_TYPE_CURRENT,
+      /* default */ FONT_KEY_BITHAM_42_LIGHT,
+      /* basalt  */ FONT_KEY_BITHAM_42_LIGHT,
+      /* chalk   */ FONT_KEY_BITHAM_42_LIGHT,
+      /* ?       */ FONT_KEY_BITHAM_42_LIGHT,
+      /* emery   */ FONT_KEY_ROBOTO_BOLD_SUBSET_49,
+      /* ?       */ FONT_KEY_BITHAM_42_LIGHT,
+      /* gabbro  */ FONT_KEY_ROBOTO_BOLD_SUBSET_49
+    )
+  ));
   layer_add_child(window_layer, text_layer_get_layer(s_text_pace));
 
   s_text_pace_unit = text_layer_create(GRect(width + gap, base_height + row_height * 2 + 6, bounds.size.w - width - gap, 20));
@@ -356,7 +381,7 @@ static void time_update_handler(struct tm *tick_time, TimeUnits units_changed)
 
 static void prv_init(void) {
   s_window = window_create();
-  window_set_background_color(s_window, GColorBlack);
+  window_set_background_color(s_window, GColorBlack); // use GColorDarkGray to debug round edges
   window_set_click_config_provider(s_window, prv_click_config_provider);
   window_set_window_handlers(s_window, (WindowHandlers) {
     .load = prv_window_load,
