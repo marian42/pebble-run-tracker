@@ -7,7 +7,7 @@ Supports all Pebble watches, including the 2026 models.
 
 ## Screenshots
 Pebble Time, Pebble Time Steel, Pebble 2, Pebble 2 Duo:  
-![](screenshots/screenshot_148x168.png) 
+![](screenshots/screenshot_144x168.png) 
 
 Pebble Round 2:  
 ![](screenshots/screenshot_260x260.png)
