@@ -16,6 +16,7 @@ Pebble Round 2:
 
 The app shows the time, distance and pace of your run as well as the wall time.
 Press Select to start/pause/resume your run.
+While running, it shows your current pace. Wile paused, it shows your overall (average) pace.
 The app doesn't save any data about your previous runs.
 At the moment, the distance can be shown in kilometers but not in miles.
 
