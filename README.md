@@ -1,5 +1,7 @@
 # Pebble Run Tracker
 
+![](banner.jpg)
+
 This is a run / walk tracker for Pebble with a focus on simplicity.
 It doesn't require a companion app but it does require a connection to a phone for GPS.
 
